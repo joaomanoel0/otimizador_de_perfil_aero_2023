@@ -1,0 +1,15 @@
+LOAD profile.dat
+profile
+PANE
+OPER
+Visc 433823
+M
+ 0.04
+PACC
+polar_file.txt
+
+ITER 7
+ASeq 0 0 0
+
+
+quit

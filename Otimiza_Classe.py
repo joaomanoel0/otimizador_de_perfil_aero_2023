@@ -10,9 +10,6 @@ class otimizador:
         self.retorno = retorno
         #self.new_method()
 
-    # def individuos(quant_objetos):
-    #     return [random.getrandbits(1) for i in range(quant_objetos)]
-
     def gera_pontos(quantidade_pontos, upper = True, sigma = 0.01):
         vetx = list(itertools.repeat(0., quantidade_pontos))
         vety = list(itertools.repeat(0., quantidade_pontos))
@@ -33,17 +30,13 @@ class otimizador:
     def gera_perfis(quant_perfis):
         perfis = []
         for i in range(1, quant_perfis):
+            #print("ok")
             x_upper, y_upper = otimizador.gera_pontos(6) # gera uma matriz de pontos superiores (aleatótios)
             x_lower, y_lower = otimizador.gera_pontos(8, False) # gera uma matriz de pontos inferiores (aleatórios)
             perfil_1 = perfil_info(x_upper, y_upper, x_lower, y_lower)
             perfis.append(perfil_1)
         return perfis
 
-    # def populacao(n_filhos, quant_objetos):
-    #     return [otimizador.individuos(quant_objetos) for i in range(n_filhos)]
-
-    # def gera_perfis(n_filhos, quant_perfis):
-    #     return [otimizador.gera_perfil(quant_perfis) for i in range(n_filhos)]
     def avalia_perfil(individuo):
         cl, cd = individuo.getparametros_perfil()
         if cd < 0:
@@ -74,65 +67,42 @@ class otimizador:
 
     #selecionar os melhores individuos de uma população para 
 
-    def sortear(avaliacao_total, valores, indice_a_ignorar=-1): #indice_a_ignorar é um parametro que garante que não vai selecionar o mesmo elemento
-        roleta, acumulado, valor_sorteado = [], 0, random() # sorteia um valor a partir da função random() (entre 0 e 1)
-        print("Numero sorteado ", valor_sorteado)
-        if indice_a_ignorar != -1: # Desconta do total o valor que sera retirado da roleta
-            avaliacao_total -= valores[0][indice_a_ignorar]
-        for indice, i in enumerate(valores[0]): # indice é a posição do valor na tupla de valores, i é o valore da avaliação
-            if indice_a_ignorar == indice: # ignora o valor ja utilizado na roleta
-                #print("ok", indice)
-                continue
-            #print("ok", indice)
-            acumulado += i # valor da avaliação é somado com o valor calculado
-            roleta.append(acumulado/avaliacao_total) # valor é colocado na última posição da 'roleta'
-            #print("roleta: ", roleta, " | valor da iteração atual: ", i)
-            # temos que se o valor da iteração atual somado com os valores das iteração anteriores (que está armazenado na variável acomulado), dividido pela soma de todas
-            # as avaliações dos pais for maior que o valor que foi sorteado, então a "roleta irá sortear" esse indice
-            if roleta[-1] >= valor_sorteado: # se o ultimo elemento de roleta for maior que o valor sorteado
-                print("Valor sorteado: ", i, " | indice: ",indice)
-                return indice
-    
+    def sortear(matriz_avaliacao, indice_a_ignorar=-1, sigma = 1): #indice_a_ignorar é um parametro que garante que não vai selecionar o mesmo elemento
+        indice_sorteado = int(random.gauss(5, sigma))
+        if indice_sorteado < 0: indice_sorteado = 0
+        elif indice_sorteado > len(matriz_avaliacao[1])-1: indice_sorteado = len(matriz_avaliacao[1])-1
+        if indice_sorteado == indice_a_ignorar:
+            indice = otimizador.sortear(matriz_avaliacao, indice_a_ignorar)
+        return indice
 
     def selecao_roleta(pais):
-        # função que sorteia um indicie de pai e de mãe a ser analisado
+        indice_pai = otimizador.sortear(pais)
+        indice_mae = otimizador.sortear(pais, indice_pai)
+        return indice_pai, indice_mae
     
-        valores = list(zip(*pais)) # organiza os dados de uma geração passada (pais) em duas tuplas, sendo que a primeria contém os dados de avaliação de cada individuo (valor de fitness)
-        # e a sengunda contém os valoes dos genes (quais objetos estão nessas mochilas pais)
-        print("Printando os val: ", valores)
-        avaliacao_total = sum(valores[0]) # o somatótio de todas as avaliaçãoes dos indivíduos (somatório da primeira tupla)
-        #print("valores: ", valores[0])
-
-        indice_pai = otimizador.sortear(avaliacao_total, valores) # sorteia, de forma pseudo aleatória os gesnes dos pais
-        indice_mae = otimizador.sortear(avaliacao_total, valores, indice_pai)
-
-        pai = valores[1][indice_pai] # selecionando a mochila pai e a mochila mãe
-        mae = valores[1][indice_mae]
-        #print("pai e mae ", pai, mae)
-        
-        return pai, mae
-    
-    def evolui(individuos_populacao, peso_maximo, volume_maximo, objetos, num_filhos, ind_mutacao = 0.05):
-        pais = [[otimizador.avaliacao(i, peso_maximo, volume_maximo, objetos), i] for i in individuos_populacao if otimizador.avaliacao(i, peso_maximo, volume_maximo, objetos)>= 0]
-        #print(pais)
-        pais.sort(reverse=True) # organiza em ordem decrescente pela avaliação
-        #print("Após a organização")
-        print(pais, "\n")
+    def evolui(pais, num_filhos, ind_mutacao = 0.05):
+        matriz_avalizacao = np.zeros((len(pais), 2))
+        for i in range(pais):
+            matriz_avalizacao[i, 0], matriz_avalizacao[i, 1] = otimizador.avalia_perfil(pais[i]), pais[i]
+        sorted(matriz_avalizacao[0], reverse=True)
         filhos = []
 
         while len(filhos) < num_filhos: # geração de filhos
-            pai, mae = otimizador.selecao_roleta(pais) # seleciona os genes dos pais e das mães, de forma pseudo aleatória
-            meio = len(pai)//2 # divisão que retorna um numero inteiro 
-            filho = pai[:meio] + mae[meio:] # o filho é gerado a partir da metade dos genes do pai e metade dos genes da mae
-            filhos.append(filho) # os genes do filho são colocados na lista de filhos
+            pai, mae = otimizador.selecao_roleta(matriz_avalizacao) # seleciona os genes dos pais e das mães, de forma pseudo aleatória
+            perfil_pai, perfil_mae = matriz_avalizacao[pai, 1], matriz_avalizacao[mae, 1]
+            filho = perfil_info(perfil_pai.x_upper, perfil_mae.y_upper, perfil_mae.x_lower, perfil_pai.y_lower)
+            filhos.append(filho)
 
-        for mochila in filhos:
+        for perfil in filhos:
             if ind_mutacao > random(): # verifica, de forma pseudo aleatória se alguma mutação irá ocorrer
-                posicao_mutacao = random.randint(0, len(mochila)-1) # seleciona aleatoriamente no individuo um gene a ser mudado
-                if mochila[posicao_mutacao] == 1: # se o gene estiver em um muda para zero e vice-versa 
-                    mochila[posicao_mutacao] = 0
+                mutacao = random.getrandbits() # seleciona aleatoriamente no individuo um gene a ser mudado
+                if mutacao == 1:
+                    y_upper = otimizador.trunc_gauss(perfil.y_upper, ind_mutacao, 0, 15)
+                    perfil = perfil_info(perfil.x_upper, y_upper, perfil.x_lower, perfil.y_lower)
                 else:
-                    mochila[posicao_mutacao] = 1
+                    y_lower = otimizador.trunc_gauss(perfil.y_lower, ind_mutacao, -15, 0)
+                    perfil = perfil_info(perfil.x_upper, perfil.y_upper, perfil.x_lower, y_lower)
+
         return filhos
 
     def melhor_individuo_geracao(populacao_mochilas, peso_maximo, vomume_maximo, objetos):

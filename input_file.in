@@ -8,8 +8,8 @@ M
 PACC
 polar_file.txt
 
-ITER 7
-ASeq 0 0 0
+ITER 99
+ASeq 0 15 0
 
 
 quit

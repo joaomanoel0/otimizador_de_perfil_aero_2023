@@ -4,6 +4,8 @@ from matplotlib import pyplot
 import subprocess
 import numpy as np
 
+# classe que contem as informações de um perfil, para construir um perfil
+# para construir um perfil basta fornecer os pontos x e y, tanto no primeiro e segundo, como no terceiro e quarto quadrantes
 class perfil_info:
     def __init__(self, x_upper, y_upper, x_lower, y_lower):
         self.x_upper = x_upper
@@ -13,6 +15,7 @@ class perfil_info:
         self.order_u = len(x_upper)-1
         self.order_l = len(x_lower)-1
     
+    # metódo que restorna as informações de cl e cd de um perfil
     def informacoes_perfil(self):
         xu,yu = curvas.bezier_profiles(self.x_upper,self.y_upper,self.order_u)
         f1 = open('profile.dat','w') 
@@ -44,8 +47,8 @@ class perfil_info:
         valor = 1
         continua = True
         CL, CD = "ERRO", "ERRO"
-        while(continua):
-            xfoil_1 = xfoil("profile", 0, 15, 0, 433823, 0.04, valor)
+        while(continua): # laço que varia o último parâmetro do método construtur do xfoil
+            xfoil_1 = xfoil("profile", 0, 15, 0, 433823, 0.04, valor) # ate conseguir retornar o cl e cd
             xfoil_1.input_xfoil() #objeto de análise
 
             '''Objeto modelo: 
@@ -77,7 +80,7 @@ class perfil_info:
             print(f'Valor do CL = {CL}, valor do CD = {CD}')
             if CL == "ERRO" or CD == "ERRO":
                 valor += 1
-            if valor == 100 or ((CL != "ERRO") and (CD != "ERRO")):
+            if valor == 50 or ((CL != "ERRO") and (CD != "ERRO")):
                 continua = False
             print("valor: ",valor)
         return CL, CD

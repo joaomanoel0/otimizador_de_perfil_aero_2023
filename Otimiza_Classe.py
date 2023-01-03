@@ -10,6 +10,8 @@ class otimizador:
         self.retorno = retorno
         #self.new_method()
 
+    # método que gera pontos no palno x e y para serem utilizados na construção de um perfil com o método de Bezier
+    # sendo que upper é para definir se os pontos serão nos quadrantes superiores ou inferiores do plano cartesiano
     def gera_pontos(quantidade_pontos, upper = True, sigma = 0.01):
         vetx = list(itertools.repeat(0., quantidade_pontos))
         vety = list(itertools.repeat(0., quantidade_pontos))
@@ -27,6 +29,7 @@ class otimizador:
                     vety[i] = (random.uniform(0., 0.15))
         return vetx, vety
     
+    # função que gera de forma aleatória perfis (para os perfis iniciais)
     def gera_perfis(quant_perfis):
         perfis = []
         for i in range(1, quant_perfis):
@@ -37,6 +40,7 @@ class otimizador:
             perfis.append(perfil_1)
         return perfis
 
+    # função que avalia o quão bom é um perfil (com base no CD e no CL)
     def avalia_perfil(individuo):
         cl, cd = individuo.getparametros_perfil()
         if cd < 0:
@@ -45,28 +49,12 @@ class otimizador:
             avaliacao = abs(cl) - cd
         return avaliacao
     
+    # retorna a média da avaliação de um grupo de indivíduos 
     def media_avaliacao(individuos_populacao):
         soma = sum(otimizador.avalia_perfil(i) for i in individuos_populacao)
         return (soma/((len(individuos_populacao)*1.0)))
-        
-    # def avaliacao(individuo, peso_maximo, volume_maximo, objetos):
-    #     retorno = 0
-    #     peso_tot, val_tot, volume_tot = 0, 0, 0
-    #     for i, x in enumerate(individuo):
-    #         peso_tot += (individuo[i] * objetos[i][0])
-    #         val_tot += (individuo[i] * objetos[i][1])
-    #         volume_tot += (individuo[i] * objetos[i][2])
-    #     if (peso_maximo - peso_tot) < 0 or (volume_maximo - volume_tot) < 0:
-    #         return 0
-    #     else:
-    #         return val_tot
-        
-    # def media_avaliacao(individuos_populacao, peso_maximo, volume_maximo, objetos):
-    #     soma = sum(otimizador.avaliacao(i, peso_maximo, volume_maximo, objetos) for i in individuos_populacao if otimizador.avaliacao(i, peso_maximo, volume_maximo, objetos)>=0)
-    #     return (soma/((len(individuos_populacao)*1.0)))
 
-    #selecionar os melhores individuos de uma população para 
-
+    #selecionar os melhores individuos de uma população para que a repodução ocorra 
     def sortear(matriz_avaliacao, indice_a_ignorar=-1, sigma = 1): #indice_a_ignorar é um parametro que garante que não vai selecionar o mesmo elemento
         indice_sorteado = int(random.gauss(5, sigma))
         if indice_sorteado < 0: indice_sorteado = 0
@@ -75,6 +63,7 @@ class otimizador:
             indice = otimizador.sortear(matriz_avaliacao, indice_a_ignorar)
         return indice
 
+    # função que seleciona o perfil pai e o perfil mãe para a próxima geração
     def selecao_roleta(pais):
         indice_pai = otimizador.sortear(pais)
         indice_mae = otimizador.sortear(pais, indice_pai)
@@ -105,27 +94,16 @@ class otimizador:
 
         return filhos
 
-    def melhor_individuo_geracao(populacao_mochilas, peso_maximo, vomume_maximo, objetos):
-        anterior = 0
-        proximo = 0
-        individuo = populacao_mochilas[0]
-        for i in range(0, len(populacao_mochilas)):
-            proximo = otimizador.avaliacao(populacao_mochilas[i], peso_maximo, vomume_maximo, objetos)
-            if proximo > anterior:
-                anterior = proximo
-                individuo = populacao_mochilas[i]
-        return anterior, individuo
+    # método que retorna o melhor individuo de uma população (com base em sua avaliacao)
+    def melhor_individuo_geracao(populacao):
+        matriz_avalizacao = np.zeros((len(populacao), 2))
+        for i in range(populacao):
+            matriz_avalizacao[i, 0], matriz_avalizacao[i, 1] = otimizador.avalia_perfil(populacao[i]), populacao[i]
+        sorted(matriz_avalizacao[0], reverse=True)
+        individuo = matriz_avalizacao[0, 1]
+        return individuo
 
-    def valores_armazenados(individuo):
-        soma_valor, soma_volume, soma_peso = 0, 0, 0
-        for i in range(0, len(individuo)):
-            #print(individuo[i])
-            if individuo[i] == 1:
-                soma_peso += otimizador.objetos[i][0]
-                soma_volume += otimizador.objetos[i][2]
-                soma_valor += otimizador.objetos[i][1]
-        return soma_peso, soma_volume, soma_valor
-
+    # função gaussiana truncada entre um intervalo (tilizada para o sortério pseudo aleatório de indivíduos)
     def trunc_gauss(mu, sigma, bottom, top):
         a = random.gauss(mu, sigma)
         if a >= top:

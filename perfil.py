@@ -15,7 +15,7 @@ class perfil_info:
         self.order_u = len(x_upper)-1
         self.order_l = len(x_lower)-1
     
-    # metódo que restorna as informações de cl e cd de um perfil
+    # metódo que "printa" um perfil
     def informacoes_perfil(self):
         xu,yu = curvas.bezier_profiles(self.x_upper,self.y_upper,self.order_u)
         f1 = open('profile.dat','w') 
@@ -44,6 +44,10 @@ class perfil_info:
         pyplot.plot(self.x_lower,self.y_lower,'--ro')    
         #pyplot.show()
         pyplot.savefig('perfil_gerado.png', format = 'png')
+
+    # metódo que retorna as informações de cl e cd de um perfil
+    def getparametros_perfil(self):
+        self.informacoes_perfil()
         valor = 1
         continua = True
         CL, CD = "ERRO", "ERRO"
@@ -84,39 +88,3 @@ class perfil_info:
                 continua = False
             print("valor: ",valor)
         return CL, CD
-
-    
-    # def getparametros_perfil(self):
-
-    #     xfoil_1 = xfoil("profile", 0, 0, 0, 433823, 0.04, 7)
-    #     xfoil_1.input_xfoil() #objeto de análise
-
-    #     '''Objeto modelo: 
-    #     xfoil_0 = xfoil("s1223rtl", 0 , 15, 1, 1000000, 0.04, 50)
-    #     xfoil_0.input_xfoil()'''
-
-    #     #Input do objeto(perfil) para análise no Xfoil
-
-    #     subprocess.call("xfoil.exe < input_file.in", shell=True)
-    #     polar_data = np.loadtxt("polar_file.txt", skiprows=12)
-
-    #     # Lendo os valores de CL e CD do arquivo polar_file.txt
-
-    #     with open("polar_file.txt", "r") as arq:
-    #         lista = arq.readlines() #readlines transforma o arquivo lido em uma lista (algo mais facil de tratar em python)
-    #     #print(lista)
-
-    #     for line in lista:
-    #         if "0.000" in line:
-    #             #print(line[10:17])
-    #             if line[10] == "-":
-    #                 CL = float(line[10:17])
-    #                 print(CL, end=" ")
-    #             else:
-    #                 CL = float(line[11:17])
-    #                 print(CL, end=" ")
-    #             CD = float(line[20:27])
-    #             print(CD)
-
-    #     print(f'Valor do CL = {CL}, valor do CD = {CD}')
-    #     return CL, CD

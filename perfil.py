@@ -7,13 +7,16 @@ import numpy as np
 # classe que contem as informações de um perfil, para construir um perfil
 # para construir um perfil basta fornecer os pontos x e y, tanto no primeiro e segundo, como no terceiro e quarto quadrantes
 class perfil_info:
-    def __init__(self, x_upper, y_upper, x_lower, y_lower):
+
+    def __init__(self, x_upper, y_upper, x_lower, y_lower, cl = "N", cd = "N"):
         self.x_upper = x_upper
         self.y_upper = y_upper
         self.x_lower = x_lower
         self.y_lower = y_lower
         self.order_u = len(x_upper)-1
         self.order_l = len(x_lower)-1
+        self.cl = cl
+        self.cd = cd
     
     # metódo que "printa" um perfil
     def informacoes_perfil(self):
@@ -46,7 +49,7 @@ class perfil_info:
         pyplot.savefig('perfil_gerado.png', format = 'png')
 
     # metódo que retorna as informações de cl e cd de um perfil
-    def getparametros_perfil(self):
+    def calcula_clcd(self):
         self.informacoes_perfil()
         valor = 1
         continua = True
@@ -74,17 +77,22 @@ class perfil_info:
                     #print(line[10:17])
                     if line[10] == "-":
                         CL = float(line[10:17])
-                        print(CL, end=" ")
+                        #print(CL, end=" ")
                     else:
                         CL = float(line[11:17])
-                        print(CL, end=" ")
+                        #print(CL, end=" ")
                     CD = float(line[20:27])
-                    print(CD)
+                    #print(CD)
 
-            print(f'Valor do CL = {CL}, valor do CD = {CD}')
+            #print(f'Valor do CL = {CL}, valor do CD = {CD}')
             if CL == "ERRO" or CD == "ERRO":
                 valor += 1
             if valor == 50 or ((CL != "ERRO") and (CD != "ERRO")):
                 continua = False
-            print("valor: ",valor)
+            #print("valor: ",valor)
         return CL, CD
+
+    def getparametros_perfil(self):
+        if self.cl == "N" or self.cd == "N":
+            self.cl, self.cd = perfil_info.calcula_clcd(self)
+        return self.cl, self.cd

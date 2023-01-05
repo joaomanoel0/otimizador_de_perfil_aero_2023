@@ -3,6 +3,7 @@ from perfil import perfil_info
 import itertools
 import numpy as np
 import random
+from operator import itemgetter, attrgetter
 
 class otimizador:
 
@@ -47,11 +48,13 @@ class otimizador:
     # função que gera de forma aleatória perfis (para os perfis iniciais)
     def gera_perfis(quant_perfis):
         perfis = []
-        for i in range(1, quant_perfis):
+        print("ok")
+        while len(perfis) < quant_perfis:
             x_upper, y_upper, anterior = otimizador.gera_pontos(6) # gera uma matriz de pontos superiores (aleatótios)
             x_lower, y_lower, anterior = otimizador.gera_pontos(8, False, anterior) # gera uma matriz de pontos inferiores (aleatórios)
             perfil_1 = perfil_info(x_upper, y_upper, x_lower, y_lower)
-            perfis.append(perfil_1)
+            if otimizador.avalia_perfil(perfil_1) != "ERRO":
+                perfis.append(perfil_1)
         return perfis
 
     # função que avalia o quão bom é um perfil (com base no CD e no CL)
@@ -77,7 +80,7 @@ class otimizador:
         while continua:
             indice_sorteado = int(random.gauss(5, sigma))
             if indice_sorteado < 0: indice_sorteado = 0
-            elif indice_sorteado > len(matriz_avaliacao[1])-1: indice_sorteado = len(matriz_avaliacao[1])-1
+            elif indice_sorteado > len(matriz_avaliacao[0])-1: indice_sorteado = len(matriz_avaliacao[0])-1
             if indice_sorteado != indice_a_ignorar:
                 continua = False
         return indice_sorteado
@@ -88,7 +91,7 @@ class otimizador:
         indice_mae = otimizador.sortear(pais, indice_pai)
         return indice_pai, indice_mae
     
-    def evolui(pais, num_filhos, ind_mutacao = 0.05):
+    def evolui(pais, num_filhos, ind_mutacao = 0.1):
         matriz_avaliacao = otimizador.ranking_individuos(pais)
         filhos = []
 
@@ -96,7 +99,8 @@ class otimizador:
             pai, mae = otimizador.selecao_roleta(matriz_avaliacao) # seleciona os genes dos pais e das mães, de forma pseudo aleatória
             perfil_pai, perfil_mae = matriz_avaliacao[1][pai], matriz_avaliacao[1][mae]
             filho = perfil_info(perfil_pai.x_upper, perfil_pai.y_upper, perfil_mae.x_lower, perfil_mae.y_lower)
-            filhos.append(filho)
+            if otimizador.avalia_perfil(filho) != "ERRO":
+                filhos.append(filho)
 
         for perfil in filhos:
             if ind_mutacao > random.random(): # verifica, de forma pseudo aleatória se alguma mutação irá ocorrer
@@ -108,19 +112,20 @@ class otimizador:
         y_lower, x_lower = perfil.y_lower, perfil.y_lower
         for i in range(2, len(y_upper)-1):
             y_upper[i] = otimizador.trunc_gauss(y_upper[i], sigma, 0., 0.15)
-            x_upper[i] = otimizador.trunc_gauss(x_upper[i], sigma, 0., 0.15)
-        for i in range(10, len(y_lower)-10):
+        for i in range(2, len(y_lower)-1):
             y_lower[i] = otimizador.trunc_gauss(y_lower[i], sigma, -0.15, 0.)
-            x_lower[i] = otimizador.trunc_gauss(x_lower[i], sigma, -0.15, 0.)
-        perfil = perfil_info(x_upper, y_upper, x_lower, y_lower)
+        perfil_1 = perfil_info(x_upper, y_upper, x_lower, y_lower)
+        if otimizador.avalia_perfil(perfil_1) != "ERRO":
+            perfil = perfil_1
         return perfil
 
     # método que retorna o melhor individuo de uma população (com base em sua avaliacao)
     def ranking_individuos(populacao):
-        perfis = [[otimizador.avalia_perfil(i), i] for i in populacao if otimizador.avalia_perfil(i)!= "ERRO"]
-        print(perfis)
-        perfis = sorted(perfis, reverse=True)
-        valores = list(zip(*perfis))
+        #pf = sorted(populacao, key=lambda perfil_info:perfil_info.avaliacao)
+        perfis_0 = [[otimizador.avalia_perfil(i), i] for i in populacao if otimizador.avalia_perfil(i)!= "ERRO"]
+        print(perfis_0)
+        pf = sorted(perfis_0, key=itemgetter(0), reverse=True)
+        valores = list(zip(*pf))
         return valores
 
     # função gaussiana truncada entre um intervalo (tilizada para o sortério pseudo aleatório de indivíduos)

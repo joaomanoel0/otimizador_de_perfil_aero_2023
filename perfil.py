@@ -1,14 +1,17 @@
 from xfoilwithpython.classe_Bezier import curvas
 from xfoilwithpython.classe_Xfoil import xfoil
 from matplotlib import pyplot
+from Otimiza_Classe import otimizador
 import subprocess
 import numpy as np
+import os
+
 
 # classe que contem as informações de um perfil, para construir um perfil
 # para construir um perfil basta fornecer os pontos x e y, tanto no primeiro e segundo, como no terceiro e quarto quadrantes
 class perfil_info:
 
-    def __init__(self, x_upper, y_upper, x_lower, y_lower, cl = "N", cd = "N"):
+    def __init__(self, x_upper, y_upper, x_lower, y_lower, cl = "N", cd = "N", avaliacao = "N"):
         self.x_upper = x_upper
         self.y_upper = y_upper
         self.x_lower = x_lower
@@ -17,6 +20,7 @@ class perfil_info:
         self.order_l = len(x_lower)-1
         self.cl = cl
         self.cd = cd
+        self.avaliacao = avaliacao
     
     # metódo que "printa" um perfil
     def informacoes_perfil(self):
@@ -36,7 +40,6 @@ class perfil_info:
             y.append(float(yl[i]))
         f1.close()  
         size = 5.0
-
         pyplot.figure(figsize=(2*size,size))
         pyplot.xlabel('x', fontsize=16)
         pyplot.ylabel('y', fontsize=16)
@@ -95,4 +98,6 @@ class perfil_info:
     def getparametros_perfil(self):
         if self.cl == "N" or self.cd == "N":
             self.cl, self.cd = perfil_info.calcula_clcd(self)
+        self.avaliacao = otimizador.avalia_perfil(self)
         return self.cl, self.cd
+    

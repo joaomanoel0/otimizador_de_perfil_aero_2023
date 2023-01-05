@@ -73,11 +73,13 @@ class otimizador:
 
     #selecionar os melhores individuos de uma população para que a repodução ocorra 
     def sortear(matriz_avaliacao, indice_a_ignorar=-1, sigma = 5): #indice_a_ignorar é um parametro que garante que não vai selecionar o mesmo elemento
-        indice_sorteado = int(random.gauss(5, sigma))
-        if indice_sorteado < 0: indice_sorteado = 0
-        elif indice_sorteado > len(matriz_avaliacao[1])-1: indice_sorteado = len(matriz_avaliacao[1])-1
-        if indice_sorteado == indice_a_ignorar:
-            indice_sorteado = otimizador.sortear(matriz_avaliacao, indice_a_ignorar)
+        continua = True
+        while continua:
+            indice_sorteado = int(random.gauss(5, sigma))
+            if indice_sorteado < 0: indice_sorteado = 0
+            elif indice_sorteado > len(matriz_avaliacao[1])-1: indice_sorteado = len(matriz_avaliacao[1])-1
+            if indice_sorteado != indice_a_ignorar:
+                continua = False
         return indice_sorteado
 
     # função que seleciona o perfil pai e o perfil mãe para a próxima geração
@@ -87,10 +89,7 @@ class otimizador:
         return indice_pai, indice_mae
     
     def evolui(pais, num_filhos, ind_mutacao = 0.05):
-        perfis = [[otimizador.avalia_perfil(i), i] for i in pais if otimizador.avalia_perfil(i)!= "ERRO"]
-        #print(perfis)
-        perfis.sort(reverse=True)
-        matriz_avaliacao = list(zip(*perfis))
+        matriz_avaliacao = otimizador.ranking_individuos(pais)
         filhos = []
 
         while len(filhos) < num_filhos: # geração de filhos
@@ -101,27 +100,27 @@ class otimizador:
 
         for perfil in filhos:
             if ind_mutacao > random.random(): # verifica, de forma pseudo aleatória se alguma mutação irá ocorrer
-                mutacao = random.getrandbits(1) # seleciona aleatoriamente no individuo um gene a ser mudado
-                if mutacao == 1:
-                    local = random.randint(2, 5)
-                    y_upper = perfil.y_upper
-                    y_upper[local] = otimizador.trunc_gauss(y_upper[local], ind_mutacao, 0, 15)
-                    perfil = perfil_info(perfil.x_upper, y_upper, perfil.x_lower, perfil.y_lower)
-                else:
-                    local = random.randint(2, 7)
-                    y_lower = perfil.y_lower
-                    y_lower[local] = otimizador.trunc_gauss(y_lower[local], ind_mutacao, -15, 0)
-                    perfil = perfil_info(perfil.x_upper, perfil.y_upper, perfil.x_lower, y_lower)
-
+                perfil = otimizador.mutacao(perfil)
         return filhos
 
+    def mutacao(perfil, sigma = 0.05):
+        y_upper, x_upper = perfil.y_upper, perfil.x_upper
+        y_lower, x_lower = perfil.y_lower, perfil.y_lower
+        for i in range(2, len(y_upper)-1):
+            y_upper[i] = otimizador.trunc_gauss(y_upper[i], sigma, 0., 0.15)
+            x_upper[i] = otimizador.trunc_gauss(x_upper[i], sigma, 0., 0.15)
+        for i in range(10, len(y_lower)-10):
+            y_lower[i] = otimizador.trunc_gauss(y_lower[i], sigma, -0.15, 0.)
+            x_lower[i] = otimizador.trunc_gauss(x_lower[i], sigma, -0.15, 0.)
+        perfil = perfil_info(x_upper, y_upper, x_lower, y_lower)
+        return perfil
+
     # método que retorna o melhor individuo de uma população (com base em sua avaliacao)
-    def melhor_individuo_geracao(populacao):
+    def ranking_individuos(populacao):
         perfis = [[otimizador.avalia_perfil(i), i] for i in populacao if otimizador.avalia_perfil(i)!= "ERRO"]
         print(perfis)
-        perfis.sort(reverse=True)
+        perfis = sorted(perfis, reverse=True)
         valores = list(zip(*perfis))
-        #individuo = matriz_avalizacao[1][0]
         return valores
 
     # função gaussiana truncada entre um intervalo (tilizada para o sortério pseudo aleatório de indivíduos)

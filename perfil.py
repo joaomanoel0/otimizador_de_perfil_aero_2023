@@ -1,7 +1,7 @@
 from xfoilwithpython.classe_Bezier import curvas
 from xfoilwithpython.classe_Xfoil import xfoil
 from matplotlib import pyplot
-from Otimiza_Classe import otimizador
+#from Otimiza_Classe import otimizador
 import subprocess
 import numpy as np
 import os
@@ -98,6 +98,17 @@ class perfil_info:
     def getparametros_perfil(self):
         if self.cl == "N" or self.cd == "N":
             self.cl, self.cd = perfil_info.calcula_clcd(self)
-        self.avaliacao = otimizador.avalia_perfil(self)
         return self.cl, self.cd
     
+    def avalia_perfil(self):
+        if self.avaliacao=="N":
+            try:
+                cl, cd = self.getparametros_perfil()
+                if cd < 0:
+                    avaliacao = "ERRO"
+                else:
+                    avaliacao = abs(cl) - cd
+            except:
+                avaliacao = "ERRO"
+            self.avaliacao = avaliacao
+        return self.avaliacao

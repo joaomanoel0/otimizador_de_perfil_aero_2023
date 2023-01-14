@@ -1,3 +1,7 @@
+
+PLOP
+G
+
 LOAD profile.dat
 profile
 PANE
@@ -8,7 +12,7 @@ M
 PACC
 polar_file.txt
 
-ITER 21
+ITER 1
 ASeq 0 15 0
 
 

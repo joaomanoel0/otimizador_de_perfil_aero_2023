@@ -19,6 +19,7 @@ class xfoil:
         # Cada ação descrita a seguir corresponde a um comando interno no programa Xfoil
 
         input_file = open("input_file.in", 'w')
+        input_file.write("\nPLOP\nG\n\n")
         input_file.write("LOAD {0}.dat\n".format(self.airfoil_name))
         input_file.write(self.airfoil_name + '\n')
         input_file.write("PANE\n")

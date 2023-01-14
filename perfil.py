@@ -5,6 +5,7 @@ from matplotlib import pyplot
 import subprocess
 import numpy as np
 import os
+import time
 
 
 # classe que contem as informações de um perfil, para construir um perfil
@@ -24,6 +25,7 @@ class perfil_info:
     
     # metódo que "printa" um perfil
     def informacoes_perfil(self):
+        pyplot.close()
         xu,yu = curvas.bezier_profiles(self.x_upper,self.y_upper,self.order_u)
         f1 = open('profile.dat','w') 
         x = list()
@@ -43,8 +45,8 @@ class perfil_info:
         pyplot.figure(figsize=(2*size,size))
         pyplot.xlabel('x', fontsize=16)
         pyplot.ylabel('y', fontsize=16)
-        pyplot.xlim(-0.20, 1.2)
-        pyplot.ylim(-0.18, 0.18)
+        pyplot.xlim(-0.10, 1.1)
+        pyplot.ylim(-0.24, 0.36)
         pyplot.plot(x,y)        
         pyplot.plot(self.x_upper,self.y_upper,'--ro')
         pyplot.plot(self.x_lower,self.y_lower,'--ro')    
@@ -58,6 +60,7 @@ class perfil_info:
         continua = True
         CL, CD = "ERRO", "ERRO"
         while(continua): # laço que varia o último parâmetro do método construtur do xfoil
+            inicio = time.time()
             xfoil_1 = xfoil("profile", 0, 15, 0, 433823, 0.04, valor) # ate conseguir retornar o cl e cd
             xfoil_1.input_xfoil() #objeto de análise
 
@@ -76,6 +79,7 @@ class perfil_info:
             #print(lista)
             
             for line in lista:
+                
                 if "0.000" in line:
                     #print(line[10:17])
                     if line[10] == "-":
@@ -93,7 +97,11 @@ class perfil_info:
             if valor == 50 or ((CL != "ERRO") and (CD != "ERRO")):
                 continua = False
             #print("valor: ",valor)
-        return CL, CD
+            fim = time.time()
+            #print("Tempo: ", inicio-fim)
+            if abs(inicio-fim) > 2.5:
+                continua = False
+        return abs(CL), CD
 
     def getparametros_perfil(self):
         if self.cl == "N" or self.cd == "N":
@@ -107,7 +115,7 @@ class perfil_info:
                 if cd < 0:
                     avaliacao = "ERRO"
                 else:
-                    avaliacao = abs(cl) - cd
+                    avaliacao = abs(cl)/cd
             except:
                 avaliacao = "ERRO"
             self.avaliacao = avaliacao

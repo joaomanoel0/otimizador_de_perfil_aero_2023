@@ -25,12 +25,19 @@ class otimizador:
                 vetx[i] = random.gauss(ponto, sigma)
                 ponto += espacamento
                 if upper == False:
-                    vety[i] = -(random.uniform(0., 0.10))
+                    vety[i] = (random.uniform(0.04, -0.10))
                 else:
                     vety[i] = (random.uniform(0., 0.10))
+            elif i == quantidade_pontos-3:
+                vetx[i] = random.gauss(ponto, sigma)
+                ponto += espacamento
+                if upper == False:
+                    vety[i] = (random.uniform(0.04, -0.10))
+                else:
+                    vety[i] = (random.uniform(0., 0.15))
             elif i == 1:
                 if anterior == False:
-                    vety[1] = random.uniform(0.02, 0.15)
+                    vety[1] = random.uniform(0.02, 0.12)
                     anterior = vety[1]
                 else:
                     vety[1] = -(anterior)
@@ -39,22 +46,23 @@ class otimizador:
                 vetx[i] = random.gauss(ponto, sigma)
                 ponto += espacamento
                 if upper == False:
-                    vety[i] = -(random.uniform(0., 0.15))
+                    vety[i] = (random.uniform(-0.15, 0.))
                 else:
                     vety[i] = (random.uniform(0., 0.15))
 
         return vetx, vety, anterior
     
     # função que gera de forma aleatória perfis (para os perfis iniciais)
-    def gera_perfis(quant_perfis):
+    def gera_perfis(quant_perfis, sup = 8, inf = 9):
         perfis = []
-        print("ok")
+        #print("ok")
         while len(perfis) < quant_perfis:
-            x_upper, y_upper, anterior = otimizador.gera_pontos(6) # gera uma matriz de pontos superiores (aleatótios)
-            x_lower, y_lower, anterior = otimizador.gera_pontos(8, False, anterior) # gera uma matriz de pontos inferiores (aleatórios)
-            perfil_1 = perfil_info(x_upper, y_upper, x_lower, y_lower)
-            if perfil_1.avalia_perfil() != "ERRO":
-                perfis.append(perfil_1)
+            x_upper, y_upper, anterior = otimizador.gera_pontos(sup) # gera uma matriz de pontos superiores (aleatótios)
+            x_lower, y_lower, anterior = otimizador.gera_pontos(inf, False, anterior) # gera uma matriz de pontos inferiores (aleatórios)
+            if ((otimizador.verifica_cond(x_upper) == True) and (otimizador.verifica_cond(x_lower) == True) and (otimizador.verifica_cond(y_upper, True, True) == True) and (otimizador.verifica_cond(y_lower, True) == True)):
+                perfil_1 = perfil_info(x_upper, y_upper, x_lower, y_lower)
+                if perfil_1.avalia_perfil() != "ERRO":
+                    perfis.append(perfil_1)
         return perfis
 
     # função que avalia o quão bom é um perfil (com base no CD e no CL)
@@ -65,12 +73,13 @@ class otimizador:
         return (soma/((len(individuos_populacao)*1.0)))
 
     #selecionar os melhores individuos de uma população para que a repodução ocorra 
-    def sortear(matriz_avaliacao, indice_a_ignorar=-1, sigma = 5): #indice_a_ignorar é um parametro que garante que não vai selecionar o mesmo elemento
+    def sortear(matriz_avaliacao, indice_a_ignorar=-1): #indice_a_ignorar é um parametro que garante que não vai selecionar o mesmo elemento
+        sigma = len(matriz_avaliacao)/4
         continua = True
         while continua:
-            indice_sorteado = int(random.gauss(5, sigma))
+            indice_sorteado = int(random.gauss(0, sigma))
             if indice_sorteado < 0: indice_sorteado = 0
-            elif indice_sorteado > len(matriz_avaliacao[0])-1: indice_sorteado = len(matriz_avaliacao[0])-1
+            elif indice_sorteado > len(matriz_avaliacao)-1: indice_sorteado = len(matriz_avaliacao)-1
             if indice_sorteado != indice_a_ignorar:
                 continua = False
         return indice_sorteado
@@ -79,16 +88,17 @@ class otimizador:
     def selecao_roleta(pais):
         indice_pai = otimizador.sortear(pais)
         indice_mae = otimizador.sortear(pais, indice_pai)
+        print("Indice pai: ", indice_pai, "| Indice mãe: ", indice_mae)
         return indice_pai, indice_mae
     
-    def evolui(pais, num_filhos, ind_mutacao = 0.1):
+    def evolui(pais, num_filhos, ind_mutacao = 0.5):
         matriz_avaliacao = otimizador.ranking_individuos(pais)
         filhos = []
 
         while len(filhos) < num_filhos: # geração de filhos
             pai, mae = otimizador.selecao_roleta(matriz_avaliacao) # seleciona os genes dos pais e das mães, de forma pseudo aleatória
-            perfil_pai, perfil_mae = matriz_avaliacao[1][pai], matriz_avaliacao[1][mae]
-            if (otimizador.verifica_cond(perfil_pai.x_upper) == True) and (otimizador.verifica_cond(perfil_mae.x_lower) == True):
+            perfil_pai, perfil_mae = matriz_avaliacao[pai], matriz_avaliacao[mae]
+            if ((otimizador.verifica_cond(perfil_pai.x_upper) == True) and (otimizador.verifica_cond(perfil_mae.x_lower) == True) and (otimizador.verifica_cond(perfil_pai.y_upper, True, True) == True) and (otimizador.verifica_cond(perfil_mae.y_lower, True) == True)):
                 filho = perfil_info(perfil_pai.x_upper, perfil_pai.y_upper, perfil_mae.x_lower, perfil_mae.y_lower)
                 if filho.avalia_perfil()!="ERRO":
                     filhos.append(filho)
@@ -96,35 +106,44 @@ class otimizador:
         for perfil in filhos:
             if ind_mutacao > random.random(): # verifica, de forma pseudo aleatória se alguma mutação irá ocorrer
                 perfil_1 = otimizador.mutacao(perfil)
-                if (otimizador.verifica_cond(perfil_1.x_upper) == True) and (otimizador.verifica_cond(perfil_1.x_lower) == True):
+                if perfil_1.avalia_perfil() != "ERRO":
                     perfil = perfil_1
         return filhos
 
-    def verifica_cond(vetx):
-        for i in vetx:
-            if i < 0 or i > 1:
-                return False
+    def verifica_cond(vetx, y = False, upper = False):
+        if y == True:
+            if upper == True:
+                for i in vetx:
+                    if i < 0 or i > 0.15:
+                        return False
+            else:
+                for i in vetx:
+                    if i < -0.15 or i > 0.05:
+                        return False
+        else:
+            for i in vetx:
+                if i < 0 or i > 1:
+                    return False
         return True
 
-    def mutacao(perfil, sigma = 0.1):
-        y_upper, y_lower = perfil.y_upper, perfil.y_lower
+    def mutacao(perfil, sigma = 0.03):
+        y_upper, y_lower = np.copy(perfil.y_upper), np.copy(perfil.y_lower)
         for i in range(2, len(y_upper)-1):
-            y_upper[i] = otimizador.trunc_gauss(y_upper[i], sigma, 0., 0.15)
+            y = otimizador.trunc_gauss(y_upper[i], sigma, 0.0, 0.15)
+            y_upper[i] = y
         for i in range(2, len(y_lower)-1):
-            y_lower[i] = -(otimizador.trunc_gauss(((y_lower[i])*(-1)), sigma, 0, 0.15))
+            x = (otimizador.trunc_gauss(y_lower[i], sigma, -0.15, 0.04))
+            y_lower[i] = x
         perfil_1 = perfil_info(perfil.x_upper, y_upper, perfil.x_lower, y_lower)
-        if perfil_1.avalia_perfil() != "ERRO":
+        if ((otimizador.verifica_cond(perfil_1.x_upper) == True) and (otimizador.verifica_cond(perfil_1.x_lower) == True) and (otimizador.verifica_cond(perfil_1.y_upper, True, True) == True) and (otimizador.verifica_cond(perfil_1.y_lower, True) == True)):
             perfil = perfil_1
         return perfil
 
     # método que retorna o melhor individuo de uma população (com base em sua avaliacao)
+    # avaliacao sendo realizada epenas a partir do cl (cl mais alto)
     def ranking_individuos(populacao):
-        #pf = sorted(populacao, key=lambda perfil_info:perfil_info.avaliacao)
-        perfis_0 = [[i.avalia_perfil(), i] for i in populacao if i.avalia_perfil()!= "ERRO"]
-        print(perfis_0)
-        pf = sorted(perfis_0, key=itemgetter(0), reverse=True)
-        valores = list(zip(*pf))
-        return valores
+        ranking_perfis = sorted(populacao, key=attrgetter('cl'), reverse=True)
+        return ranking_perfis
 
     # função gaussiana truncada entre um intervalo (tilizada para o sortério pseudo aleatório de indivíduos)
     def trunc_gauss(mu, sigma, bottom, top):

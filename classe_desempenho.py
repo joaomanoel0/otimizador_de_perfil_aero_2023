@@ -2,10 +2,11 @@
 
 import math as m
 import matplotlib.pyplot as plt
+from classe_curvas import curvas
 
 class desempenho:
 
-    def __init__(self, g, mu, K, Clmax, Cdmin, hw, bw, Sw, mtow): 
+    def __init__(self, g, mu, K, Clmax, Cdmin, hw, bw, Sw, AD, prop):
         self.g = g
         self.mu = mu
         self.K = K
@@ -14,17 +15,11 @@ class desempenho:
         self.hw = hw
         self.bw = bw
         self.Sw = Sw
-        self.mtow = mtow
-        self.W = self.mtow*self.g
+        self.AD = AD
+        self.prop = prop
+        self.Mtow = desempenho.mtow(self, AD)
+        self.W = self.Mtow*self.g
         pass
-
-    def tracao(AD, V):  # Definição da função que denota a tração disponível para a hélice escolhida (14x7-E)
-        if AD == 'F':
-            return 33.3 - 0.406*V - 0.0184*V**2  # Para altitude-densidade de 0m
-        elif AD == 'S':
-            return 30.9 - 0.377*V - 0.0171*V**2  # Para altitude-densidade de 600m
-        elif AD == 'I':
-            return 29.7 - 0.351*V - 0.0159*V**2  # Para altitude-densidade de 1200m
 
     def razao_subida(AD, V): # Definição da função que denota a razão de subida para a hélice escolhida (14x7-E)
         if AD == 'F':
@@ -82,10 +77,10 @@ class desempenho:
         return E_max
 
     def decolagem(self, rho, AD):
-        T_Vlof_r2 = desempenho.tracao(AD, desempenho.vel_liftoff_070(self, rho)) # Tração estimada na velocidade da norma aeronáutica
+        T_Vlof_r2 = curvas.tracao(AD, desempenho.vel_liftoff_070(self, rho), self.prop) # Tração estimada na velocidade da norma aeronáutica
         D_Vlof_r2 = 0.5*rho*((desempenho.vel_liftoff_070(self, rho))**2)*self.Sw*desempenho.Cd_ideal(self)
         L_Vlof_r2 = 0.5*rho*((desempenho.vel_liftoff_070(self, rho))**2)*self.Sw*desempenho.Cl_ideal(self)
-        ac_media = (1/self.mtow)*(T_Vlof_r2-D_Vlof_r2-self.mu*((self.W)-L_Vlof_r2))
+        ac_media = (1/self.Mtow)*(T_Vlof_r2-D_Vlof_r2-self.mu*((self.W)-L_Vlof_r2))
         Sg = (1.44*(self.W)**2)/(self.g*rho*self.Sw*self.Clmax*(T_Vlof_r2-D_Vlof_r2-self.mu*((self.W)-L_Vlof_r2)))
         t_Sg = m.sqrt(2*Sg/ac_media)
         return ac_media, Sg, t_Sg
@@ -117,17 +112,17 @@ class desempenho:
 
     #def envelope_de_voo():
 
-    def carga_util(self):
+    def mtow(self, AD):
         rho = 1
         Carga_util = []  #[[Sg1_F,W1_F],[Sg2_F],[Sg3_F,W3_F],...[Sgi_F,Wi_F],[Sg1_S,W1_S]...[Sgi_S,Wi_S],[Sg1_I,W1_I],...[Sgi_I,Wi_I]]
         while rho <= 3:
             mtow = 12.0 # MTOW inicial
-            if rho == 1: rho = 1.225; AD = 'F' # Troca o valor de rho=1 para rho=1.225 kg/m³ e atribui o valor correspondente (AD) à curva de tração
-            elif rho == 2: rho = 1.156; AD = 'S' # Troca o valor de rho=2 para rho=1.156 kg/m³ e atribui o valor correspondente (AD) à curva de tração
-            else: rho = 1.090; AD = 'I' # Troca o valor de rho=3 para rho=1.090 kg/m³ e atribui o valor correspondente (AD) à curva de tração
+            if rho == 1: rho = 1.225; ad = 'F' # Troca o valor de rho=1 para rho=1.225 kg/m³ e atribui o valor correspondente (ad) à curva de tração
+            elif rho == 2: rho = 1.156; ad = 'S' # Troca o valor de rho=2 para rho=1.156 kg/m³ e atribui o valor correspondente (ad) à curva de tração
+            else: rho = 1.090; ad = 'I' # Troca o valor de rho=3 para rho=1.090 kg/m³ e atribui o valor correspondente (ad) à curva de tração
             while mtow <= 20:
                 W = mtow*self.g
-                T_Vlof_r2 = desempenho.tracao(AD, (1.2*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))/m.sqrt(2)) # AD e 'Vlof/sqrt(2)'
+                T_Vlof_r2 = curvas.tracao(ad, (1.2*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))/m.sqrt(2), self.prop) # ad, 'Vlof/sqrt(2)' e Hélice
                 D_Vlof_r2 = 0.5*rho*(((1.2*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))/m.sqrt(2))**2)*self.Sw*desempenho.Cd_ideal(self)
                 L_Vlof_r2 = 0.5*rho*(((1.2*(m.sqrt((2*W)/(rho*self.Sw*self.Clmax))))/m.sqrt(2))**2)*self.Sw*desempenho.Cl_ideal(self)
                 Sg = (1.44*W**2)/(self.g*rho*self.Sw*self.Clmax*(T_Vlof_r2-D_Vlof_r2-self.mu*(W-L_Vlof_r2)))
@@ -142,25 +137,40 @@ class desempenho:
             else: break
         x1, x2, x3 = [],[],[] # Valores de distância de decolagem para diferentes pesos na densidade do ar de 0m, 600m e 1200m
         y1, y2, y3 = [],[],[] # Valores de Pesos (W) diferentes para deolagem na densidade do ar de 0m, 600m e 1200m
+        #print(Carga_util) # Verifica os valores de SG e W para cada rho
         for i in Carga_util:
             if i[2] == 1.225:
                 x1.append(i[0]) # Valores de dist. de decolagem com rho = 1.225 kg/m³
                 y1.append(i[1]) # Valores de Peso com rho = 1.225 kg/m³
+                if i[0] <= 58: # Distância (m) que se espera que a aeroanave atinja a velocidade de decolagem em rho = 1.225 kg/m³ 
+                    mtowF = i[1]/self.g # Se o menor elemento de i[0] > "condição acima", então mtowI = 0 e a linha 83 resulta em div/0
             elif i[2] == 1.156:
                 x2.append(i[0]) # Valores de dist. de decolagem com rho = 1.156 kg/m³
                 y2.append(i[1]) # Valores de Peso com rho = 1.156 kg/m³
+                if i[0] <= 58: # Distância (m) que se espera que a aeroanave atinja a velocidade de decolagem em rho = 1.156 kg/m³
+                    mtowS = i[1]/self.g # Se o menor elemento de i[0] > "condição acima", então mtowI = 0 e a linha 83 resulta em div/0
             elif i[2] == 1.090:
                 x3.append(i[0]) # Valores de dist. de decolagem com rho = 1.090 kg/m³
                 y3.append(i[1]) # Valores de Peso com rho = 1.090 kg/m³
+                if i[0] <= 58: # Distância (m) que se espera que a aeroanave atinja a velocidade de decolagem em rho = 1.090 kg/m³
+                    mtowI = i[1]/self.g # Se o menor elemento de i[0] > "condição acima", então mtowI = 0 e a linha 83 resulta em div/0
             else:
                 break
-        plt.plot(x1, y1, ls='--', lw='1', color='c', label='Sg para rho = 1.225 kg/m³')
-        plt.plot(x2, y2, ls='--', lw='1', color='k', label='Sg para rho = 1.156 kg/m³')
-        plt.plot(x3, y3, ls='--', lw='1', color='r', label='Sg para rho = 1.090 kg/m³')
-        plt.title('Influência do peso total (W) na distância de decolagem (SG)')
-        plt.xlabel('SG (metros)', fontsize=10)
-        plt.ylabel('W (Newton)', fontsize=10)
+        plt.plot(x1, y1, ls='solid', lw='1', color='g', label='SG para rho = 1.225 kg/m³')
+        plt.plot(x2, y2, ls='solid', lw='1', color='k', label='SG para rho = 1.156 kg/m³')
+        plt.plot(x3, y3, ls='solid', lw='1', color='r', label='SG para rho = 1.090 kg/m³')
+        plt.title('Influência do peso (W) na distância de decolagem (SG)')
+        plt.xlabel('Distância de decolagem (m)', fontsize=10)
+        plt.ylabel('Peso (N)', fontsize=10)
         plt.legend()
         plt.axis("auto")
         plt.show()
-        pass
+        if AD == 'F':
+            print(f'\nO mtow encontrado máximo é: {mtowF} kg') # Verifica o mtow usado para rho = 1.225kg/m³
+            return mtowF
+        elif AD == 'S':
+            print(f'\nO mtow encontrado máximo é: {mtowS} kg') # Verifica o mtow usado para rho = 1.156kg/m³
+            return mtowS
+        elif AD == 'I':
+            print(f'\nO mtow máximo encontrado é: {mtowI} kg') # Verifica o mtow usado para rho = 1.090kg/m³
+            return mtowI

@@ -28,16 +28,16 @@ class otimizador:
                     vety[i] = (random.uniform(0.04, -0.10))
                 else:
                     vety[i] = (random.uniform(0., 0.10))
-            elif i == quantidade_pontos-3:
+            elif i == quantidade_pontos-3 or i == quantidade_pontos-4:
                 vetx[i] = random.gauss(ponto, sigma)
                 ponto += espacamento
                 if upper == False:
                     vety[i] = (random.uniform(0.04, -0.10))
                 else:
-                    vety[i] = (random.uniform(0., 0.15))
+                    vety[i] = (random.uniform(0., 0.2))
             elif i == 1:
                 if anterior == False:
-                    vety[1] = random.uniform(0.02, 0.12)
+                    vety[1] = random.uniform(0.02, 0.15)
                     anterior = vety[1]
                 else:
                     vety[1] = -(anterior)
@@ -46,9 +46,9 @@ class otimizador:
                 vetx[i] = random.gauss(ponto, sigma)
                 ponto += espacamento
                 if upper == False:
-                    vety[i] = (random.uniform(-0.15, 0.))
+                    vety[i] = (random.uniform(-0.10, 0.))
                 else:
-                    vety[i] = (random.uniform(0., 0.15))
+                    vety[i] = (random.uniform(0.06, 0.2))
 
         return vetx, vety, anterior
     
@@ -63,7 +63,13 @@ class otimizador:
                 perfil_1 = perfil_info(x_upper, y_upper, x_lower, y_lower)
                 if perfil_1.avalia_perfil() != "ERRO":
                     perfis.append(perfil_1)
-        return perfis
+
+        ranking = otimizador.ranking_individuos(perfis)
+        for i, perfil in enumerate(ranking):
+            perfil.nome = str(i+1)
+            perfil.geracao = '1'
+
+        return ranking
 
     # função que avalia o quão bom é um perfil (com base no CD e no CL)
     
@@ -88,10 +94,11 @@ class otimizador:
     def selecao_roleta(pais):
         indice_pai = otimizador.sortear(pais)
         indice_mae = otimizador.sortear(pais, indice_pai)
-        print("Indice pai: ", indice_pai, "| Indice mãe: ", indice_mae)
+        #print("Indice pai: ", indice_pai, "| Indice mãe: ", indice_mae)
         return indice_pai, indice_mae
     
-    def evolui(pais, num_filhos, ind_mutacao = 0.5):
+    def evolui(pais, num_filhos, geracao, ind_mutacao = 0.2):
+        #print(geracao)
         matriz_avaliacao = otimizador.ranking_individuos(pais)
         filhos = []
 
@@ -103,22 +110,31 @@ class otimizador:
                 if filho.avalia_perfil()!="ERRO":
                     filhos.append(filho)
 
+        if otimizador.avalia_geracao(filhos):
+            ind_mutacao == 0.9
+
         for perfil in filhos:
             if ind_mutacao > random.random(): # verifica, de forma pseudo aleatória se alguma mutação irá ocorrer
                 perfil_1 = otimizador.mutacao(perfil)
                 if perfil_1.avalia_perfil() != "ERRO":
+                    #print("MUTOU")
                     perfil = perfil_1
-        return filhos
+
+        ranking = otimizador.ranking_individuos(filhos)
+        for i, perfil in enumerate(ranking):
+            perfil.nome = str(i+1)
+            perfil.geracao = str(geracao)
+        return ranking
 
     def verifica_cond(vetx, y = False, upper = False):
         if y == True:
             if upper == True:
                 for i in vetx:
-                    if i < 0 or i > 0.15:
+                    if i < 0 or i > 0.2:
                         return False
             else:
                 for i in vetx:
-                    if i < -0.15 or i > 0.05:
+                    if i < -0.15 or i > 0.2:
                         return False
         else:
             for i in vetx:
@@ -126,18 +142,19 @@ class otimizador:
                     return False
         return True
 
-    def mutacao(perfil, sigma = 0.03):
+    def mutacao(perfil, sigma = 0.1):
         y_upper, y_lower = np.copy(perfil.y_upper), np.copy(perfil.y_lower)
-        for i in range(2, len(y_upper)-1):
-            y = otimizador.trunc_gauss(y_upper[i], sigma, 0.0, 0.15)
+        for i in range(2, len(y_upper)-1): # superior
+            y = otimizador.trunc_gauss(y_upper[i], sigma, 0.05, 0.2)
             y_upper[i] = y
-        for i in range(2, len(y_lower)-1):
+        for i in range(2, len(y_lower)-1): # inferiores
             x = (otimizador.trunc_gauss(y_lower[i], sigma, -0.15, 0.04))
             y_lower[i] = x
-        perfil_1 = perfil_info(perfil.x_upper, y_upper, perfil.x_lower, y_lower)
-        if ((otimizador.verifica_cond(perfil_1.x_upper) == True) and (otimizador.verifica_cond(perfil_1.x_lower) == True) and (otimizador.verifica_cond(perfil_1.y_upper, True, True) == True) and (otimizador.verifica_cond(perfil_1.y_lower, True) == True)):
-            perfil = perfil_1
-        return perfil
+        perfil_1 = perfil_info(np.copy(perfil.x_upper), y_upper, np.copy(perfil.x_lower), y_lower, np.copy(perfil.nome))
+        #if ((otimizador.verifica_cond(perfil_1.x_upper) == True) and (otimizador.verifica_cond(perfil_1.x_lower) == True) and (otimizador.verifica_cond(perfil_1.y_upper, True, True) == True) and (otimizador.verifica_cond(perfil_1.y_lower, True) == True)):
+        #print("Perfil: ", perfil_1.nome)
+        perfil_1.informacoes_perfil()
+        return perfil_1
 
     # método que retorna o melhor individuo de uma população (com base em sua avaliacao)
     # avaliacao sendo realizada epenas a partir do cl (cl mais alto)
@@ -153,3 +170,16 @@ class otimizador:
         if a <= bottom:
             return bottom
         return a
+    
+    def avalia_geracao(perfis):
+        ranking = otimizador.ranking_individuos(perfis)
+        anteriores = []
+        anteriores.append(ranking[0])
+        j=0
+        for i in range(1, len(ranking)-1):
+            if ranking[i] == anteriores[j]:
+                anteriores.append(ranking[i])
+                j += 1
+            if len(anteriores)>3:
+                return True
+        return False

@@ -6,13 +6,14 @@ import subprocess
 import numpy as np
 import os
 import time
+path = r'C:\Users\Jmano\Desktop\Perfis'
 
 
 # classe que contem as informações de um perfil, para construir um perfil
 # para construir um perfil basta fornecer os pontos x e y, tanto no primeiro e segundo, como no terceiro e quarto quadrantes
 class perfil_info:
 
-    def __init__(self, x_upper, y_upper, x_lower, y_lower, cl = "N", cd = "N", avaliacao = "N"):
+    def __init__(self, x_upper, y_upper, x_lower, y_lower, cl = "N", cd = "N", avaliacao = "N", nome = "SN", geracao = "ND"):
         self.x_upper = x_upper
         self.y_upper = y_upper
         self.x_lower = x_lower
@@ -22,6 +23,8 @@ class perfil_info:
         self.cl = cl
         self.cd = cd
         self.avaliacao = avaliacao
+        self.nome = nome
+        self.geracao = geracao
     
     # metódo que "printa" um perfil
     def informacoes_perfil(self):
@@ -120,3 +123,37 @@ class perfil_info:
                 avaliacao = "ERRO"
             self.avaliacao = avaliacao
         return self.avaliacao
+
+    def salvar_perfil(self):
+        newdir = path + '\geracao_' + self.geracao
+        if not os.path.exists(newdir):
+            os.mkdir(newdir)
+
+        xu,yu = curvas.bezier_profiles(self.x_upper,self.y_upper,self.order_u)
+        f1 = open( newdir+'\profile_'+self.nome+'.dat','w') 
+        x = list()
+        y = list()
+        for i in reversed(range(0,len(xu))):                     #  Writting the upper surface...
+            f1.write('%9.6f %9.6f\n' % (xu[i],yu[i]))
+            x.append(float(xu[i]))
+            y.append(float(yu[i]))
+        # Generating the lower Side of the profile    
+        xl,yl = curvas.bezier_profiles(self.x_lower,self.y_lower,self.order_l)          
+        for i in range(0,len(xl)):                               #  Writting the lower airfoil...
+            f1.write('%9.6f %9.6f\n' % (xl[i],yl[i]))
+            x.append(float(xl[i]))
+            y.append(float(yl[i]))
+        f1.close()  
+        size = 5.0
+        pyplot.figure(figsize=(2*size,size))
+        pyplot.xlabel('x', fontsize=16)
+        pyplot.ylabel('y', fontsize=16)
+        pyplot.title(label="Módulo do cl = "+str(self.cl)+" | cd = "+str(self.cd))
+        pyplot.xlim(-0.10, 1.1)
+        pyplot.ylim(-0.24, 0.36)
+        pyplot.plot(x,y)        
+        pyplot.plot(self.x_upper,self.y_upper,'--ro')
+        pyplot.plot(self.x_lower,self.y_lower,'--ro')    
+        #pyplot.show()
+        pyplot.savefig(newdir+'\perfil_gerado_'+self.nome+'.png', format = 'png')
+    

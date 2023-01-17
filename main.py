@@ -2,8 +2,8 @@ from Otimiza_Classe import otimizador
 from perfil import perfil_info
 import numpy as np
 
-num_geracoes = 2
-num_filhos = 5
+num_geracoes = 20
+num_filhos = 30
 
 perfis = otimizador.gera_perfis(num_filhos)
 for perfil in perfis:

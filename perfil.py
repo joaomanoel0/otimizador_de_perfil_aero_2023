@@ -1,7 +1,6 @@
 from xfoilwithpython.classe_Bezier import curvas
 from xfoilwithpython.classe_Xfoil import xfoil
 from matplotlib import pyplot
-#from Otimiza_Classe import otimizador
 import subprocess
 import numpy as np
 import os
@@ -11,7 +10,7 @@ path = r'C:\Users\Jmano\Desktop\Perfis'
 
 # classe que contem as informações de um perfil, para construir um perfil
 # para construir um perfil basta fornecer os pontos x e y, tanto no primeiro e segundo, como no terceiro e quarto quadrantes
-class perfil_info:
+class Perfil:
 
     def __init__(self, x_upper, y_upper, x_lower, y_lower, cl = "N", cd = "N", avaliacao = "N", nome = "SN", geracao = "ND"):
         self.x_upper = x_upper
@@ -108,7 +107,7 @@ class perfil_info:
 
     def getparametros_perfil(self):
         if self.cl == "N" or self.cd == "N":
-            self.cl, self.cd = perfil_info.calcula_clcd(self)
+            self.cl, self.cd = Perfil.calcula_clcd(self)
         return self.cl, self.cd
     
     def avalia_perfil(self):

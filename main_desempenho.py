@@ -22,7 +22,7 @@ os.system("cls")
 
 # Parâmetros (inputs) das funções de desempenho
 
-det1 = desempenho(9.80665, 0.09, 0.08177549781, 2.210, 0.011, 0.14, 2.00, 0.99, AD, '14x7')
+det1 = desempenho(9.80665, 0.09, 0.08177549781, 2.210, 0.011, 0.14, 2.00, 0.99, rho, '14x7')
 
 '''
 1º. gravidade em m/s² (g)
@@ -33,35 +33,34 @@ det1 = desempenho(9.80665, 0.09, 0.08177549781, 2.210, 0.011, 0.14, 2.00, 0.99, 
 6º. altura da asa em relação ao solo (hw)
 7º. envergadura da asa (bw)
 8º. área da asa (Sw)
-9º. massa total da aeronave (mtow)
+9º. tipo de hélice (prop)
 '''
 
-print(f"\nA velocidade de estol é {det1.vel_estol(rho):.4} m/s\n")
+print(f"\nA velocidade de estol é {det1.vel_estol():.4} m/s\n")
 
 # Decolagem
-print(f"A velocidade de decolagem é {det1.vel_liftoff(rho):.5} m/s")
-print(f"A aceleração média no momento de decolagem é {det1.decolagem(rho, AD)[0]:.4} m/s²")
-print(f"A distância de decolagem é {det1.decolagem(rho, AD)[1]:.5} m")
-print(f"O tempo de decolagem é de {det1.decolagem(rho, AD)[2]:.4} s\n")
+print(f"A velocidade de decolagem é {det1.vel_liftoff():.5} m/s")
+print(f"A aceleração média no momento de decolagem é {det1.decolagem()[0]:.4} m/s²")
+print(f"A distância de decolagem é {det1.decolagem()[1]:.5} m")
+print(f"O tempo de decolagem é de {det1.decolagem()[2]:.4} s\n")
 
 # Subida
-print(f"A razão de subida no momento de decolagem é {desempenho.razao_subida(AD, det1.vel_liftoff(rho)):.4} m/s")
-print(f"O ângulo de subida para a velocidade de decolagem é {det1.subida(AD, det1.vel_liftoff(rho))[3]:.4}°")
-print(f"A máxima razão de subida é {det1.subida(AD, det1.vel_liftoff(rho))[0]:.4} m/s")
-print(f"O ângulo de subida para a máxima razão de subida é {det1.subida(AD, det1.vel_liftoff(rho))[2]:.4}°")
-print(f"A velocidade durante a máxima razão de subida é {det1.subida(AD, det1.vel_liftoff(rho))[1]:.5} m/s\n")
+print(f"A razão de subida no momento de decolagem é {det1.subida(det1.vel_liftoff())[3]:.4} m/s")
+print(f"O ângulo de subida para a velocidade de decolagem é {det1.subida(det1.vel_liftoff())[4]:.4}°")
+print(f"A máxima razão de subida é {det1.subida(det1.vel_liftoff())[0]:.4} m/s")
+print(f"O ângulo de subida para a máxima razão de subida é {det1.subida(det1.vel_liftoff())[2]:.4}°")
+print(f"A velocidade durante a máxima razão de subida é {det1.subida(det1.vel_liftoff())[1]:.5} m/s\n")
 
 # Cruzeiro
-print(f"A velocidade de máximo alcance é {det1.vel_max_alcance(rho):.5} m/s")
-print(f"A velocidade de máxima eficiência aerodinâmica é {det1.vel_max_autonomia(rho):.5} m/s\n")
+print(f"A velocidade de máximo alcance é {det1.vel_max_alcance():.5} m/s")
+print(f"A velocidade de máxima eficiência aerodinâmica é {det1.vel_max_autonomia():.5} m/s\n")
 
 # Pouso
-print(f"A distância de pouso (FAR-23) é de {det1.pouso(rho)[0]:.6} m")
-print(f"A distância de pouso real é de {det1.pouso(rho)[1]:.6} m")
-print(f"O ângulo de planeio ideal para pouso é {det1.pouso(rho)[2]:.4}°")
-print(f"A velocidade de planeio para o ângulo ideal é {det1.pouso(rho)[3]:.5} m/s\n")
+print(f"A distância de pouso (FAR-23) é de {det1.pouso()[0]:.6} m")
+print(f"A distância de pouso real é de {det1.pouso()[1]:.6} m")
+print(f"O ângulo de planeio ideal para pouso é {det1.pouso()[2]:.4}°")
+print(f"A velocidade de planeio para o ângulo ideal é {det1.pouso()[3]:.5} m/s\n")
 
 # Teto de voo
 
 # Carga útil em função da altitude-densidade
-#det1.mtow()
